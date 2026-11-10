@@ -74,6 +74,9 @@ def _make_engine_script(spss_home: str) -> str:
         "        break",
         "",
         "    syntax      = req['syntax']",
+        "    submit_as_lines = req.get('submit_as_lines', False)",
+        "    prelude_syntax = req.get('prelude_syntax')",
+        "    prelude_as_lines = req.get('prelude_as_lines', False)",
         "    output_file = req['output_file']",
         "    viewer_file = req.get('viewer_file')",
         "    resp_file   = req['resp_file']",
@@ -86,7 +89,9 @@ def _make_engine_script(spss_home: str) -> str:
         "    os.dup2(_devnull, 1)",
         "    os.close(_devnull)",
         "    try:",
-        "        spss.Submit(syntax)",
+        "        if prelude_syntax:",
+        "            spss.Submit(prelude_syntax.splitlines() if prelude_as_lines else prelude_syntax)",
+        "        spss.Submit(syntax.splitlines() if submit_as_lines else syntax)",
         "    except spss.SpssError as e:",
         "        warn_msg = str(e)",
         "    except Exception as e:",
@@ -283,6 +288,9 @@ class SpssEngine:
         full_syntax: str,
         output_file: str,
         viewer_file: Optional[str],
+        submit_as_lines: bool = False,
+        prelude_syntax: Optional[str] = None,
+        prelude_as_lines: bool = False,
     ) -> dict:
         """
         Send OMS-wrapped SPSS syntax to the engine and return the result dict.
@@ -317,6 +325,9 @@ class SpssEngine:
                         "output_file": output_file,
                         "viewer_file": viewer_file,
                         "resp_file": resp_file,
+                        "submit_as_lines": submit_as_lines,
+                        "prelude_syntax": prelude_syntax,
+                        "prelude_as_lines": prelude_as_lines,
                     }
                 )
                 + "\n"

@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.0] - 2026-11-10
+
+### Added
+- `spss_process`：安全调用用户本机安装的 Hayes PROCESS，首版支持 Model 4
+  单一／并行中介、Bootstrap、协变量、效应量、标准化系数与间接效应对比
+- `SPSS_PROCESS_MACRO_PATH` 与 Windows 常用目录自动发现 `process.sps`
+- 状态检查显示 PROCESS 路径与版本
+- 持久 SPSS 引擎支持单独加载可信宏，并保留宏的物理行边界
+
+### Changed
+- 将上游 `server.py` 的纯 CR 行结束符标准化为 LF，便于跨平台维护与审查
+
+### Security
+- 不捆绑、也不公开分发第三方 `process.sps`
+- 工具调用方不能传入任意宏路径；宏只能来自受信环境配置或自动发现
+- 通用 `INSERT FILE` 危险语句仍然保持拦截
+
 ## [1.0.0] - 2026-08-05
 
 首个正式版。在 0.3.1 的基础上把真机验证范围拉满，并补齐 Agent 侧消费契约。

@@ -28,3 +28,9 @@ def test_registry_schema_export_contains_properties():
     assert "properties" in schema
     assert "dependent" in schema["properties"]
     assert "predictors" in schema["properties"]
+
+
+def test_process_registry_schema():
+    schema = get_method_schema("spss_process")
+    assert schema["properties"]["model"]["const"] == 4
+    assert "mediators" in schema["properties"]

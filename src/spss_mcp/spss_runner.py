@@ -106,6 +106,9 @@ async def run_syntax(
     save_syntax_file: bool = True,
     filter_variable: Optional[str] = None,
     select_if: Optional[str] = None,
+    submit_as_lines: bool = False,
+    prelude_syntax: Optional[str] = None,
+    prelude_as_lines: bool = False,
 ) -> dict:
     """
     Execute SPSS syntax via the persistent engine and return a structured result.
@@ -168,6 +171,9 @@ async def run_syntax(
     )
 
     blocked = check_syntax_safety(syntax)
+    if prelude_syntax:
+        blocked.extend(check_syntax_safety(prelude_syntax))
+        blocked = list(dict.fromkeys(blocked))
     if blocked:
         audit(
             {
@@ -248,7 +254,10 @@ async def run_syntax(
     )
 
     if syntax_file:
-        syntax_file.write_text(execution_syntax, encoding="utf-8")
+        persisted_syntax = execution_syntax
+        if prelude_syntax:
+            persisted_syntax = f"{prelude_syntax.rstrip()}\n\n{execution_syntax}"
+        syntax_file.write_text(persisted_syntax, encoding="utf-8")
 
     # ── Submit to persistent engine ───────────────────────────────────────────
     from spss_mcp.spss_engine import get_engine
@@ -257,6 +266,9 @@ async def run_syntax(
         full_syntax=full_syntax,
         output_file=str(output_file),
         viewer_file=str(viewer_file) if viewer_file else None,
+        submit_as_lines=submit_as_lines,
+        prelude_syntax=prelude_syntax,
+        prelude_as_lines=prelude_as_lines,
     )
 
     err_level = engine_result.get("err_level", 0)

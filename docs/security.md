@@ -19,6 +19,8 @@
   再校验 `data_file` 参数与语法中的 `GET FILE='...'` 路径；每次成功执行写审计。
 - `server.spss_run_syntax`：新增 `dry_run` 参数；`spss_structured_result` 同走
   `run_syntax` 安全闸。
+- `server.spss_process`：只读取自动发现或 `SPSS_PROCESS_MACRO_PATH` 指定的本机
+  `process.sps`；工具调用者不能传入宏路径，因此不会开放任意 `INSERT FILE`。
 
 ## 审计事件
 

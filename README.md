@@ -6,8 +6,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)]()
-[![CI](https://github.com/flupke91/spss-studio-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/flupke91/spss-studio-mcp/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/flupke91/spss-studio-mcp)](https://github.com/flupke91/spss-studio-mcp/releases)
+[![CI](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/actions/workflows/ci.yml/badge.svg)](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/beatricej0929-creator/spss-studio-mcp-windows-process)](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/releases)
 
 `spss-studio-mcp` 是一个面向 **IBM SPSS Statistics** 的 MCP（Model Context
 Protocol）服务器，为 Codex / Claude Code / Cursor 等 Agent 客户端提供：
@@ -15,10 +15,10 @@ Protocol）服务器，为 Codex / Claude Code / Cursor 等 Agent 客户端提�
 - **论文级出图**：11 类 `spss_chart_*` 工具，一键导出 PNG / TIFF / EMF（1950×1500 @300 dpi），路径回传可直接投稿；
 - **深度结果解析**：OMS 文本 → Markdown 表格 + 结构化 JSON + 16 类分析统计摘要（t / F / r / B / Wald / α / χ² / p / 效应量）；
 - **方法真机验证**：37 个分析方法 + 11 个补充工具全部在真实 SPSS 32 验收通过；
-- **中介 / 调节**：`spss_mediation`（Baron & Kenny 三步回归 + Sobel）、`spss_moderation`（中心化交互回归）；
+- **中介 / 调节**：新增 `spss_process` 调用本机 Hayes PROCESS Model 4（单一／并行中介、Bootstrap），并保留 `spss_mediation` 三步回归 + Sobel 与 `spss_moderation` 中心化交互回归；
 - **安全执行层**：危险命令拦截、数据路径白名单、`dry_run` 预检、JSONL 审计日志。
 
-全部能力已在 **IBM SPSS Statistics 32.0.0（Windows）** 真机验证（109 个单元测试全部通过）。
+原版分析与制图能力已在 **IBM SPSS Statistics 32.0.0（Windows）** 真机验证；新增 PROCESS 适配已通过自动测试，其 Windows 真机执行仍需在安装了 PROCESS 的 Windows SPSS 上复核。
 
 ---
 
@@ -46,13 +46,33 @@ IBM SPSS Statistics 32.0.0（Windows，本地授权）
 ## 快速开始
 
 ```powershell
-cd spss-studio-mcp
+git clone https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process.git
+cd spss-studio-mcp-windows-process
 pip install -e ".[dev]"
 spss-studio-mcp status                     # 应显示 SPSS batch: OK
 
 spss-studio-mcp configure-codex            # 写入 Codex 客户端配置（~/.codex/config.toml）
 spss-studio-mcp configure-claude           # 写入 Claude Code 配置（~/.claude.json）
 ```
+
+## Hayes PROCESS Model 4
+
+本仓库不分发第三方 `process.sps`。请从 [Andrew F. Hayes 官方网站](https://www.afhayes.com/download.html)
+下载 PROCESS，解压后在 PowerShell 中设置：
+
+```powershell
+$env:SPSS_PROCESS_MACRO_PATH = "C:\Users\YourName\Downloads\PROCESS v5.1 for SPSS\process.sps"
+```
+
+也可以把该值写入项目根目录的 `.env`。重启 MCP 客户端后运行
+`spss_check_status`；状态表显示 PROCESS 版本即可调用：
+
+```text
+用 spss_process 运行 Model 4：X=PEOU，M=PU，Y=BI，Bootstrap 5000 次。
+```
+
+首版支持一个中介或多个并行中介、协变量、总效应／直接效应／间接效应、
+Bootstrap 置信区间、间接效应对比、效应量和标准化系数。SPSS 图形菜单不是必需的。
 
 然后在客户端里直接用自然语言驱动，例如：
 
@@ -141,10 +161,10 @@ spss_structured_result(
 
 ## 生态收录与发布
 
-- 状态：P0–P4 里程碑完成，**v1.0.0 已发布**（[GitHub Releases](https://github.com/flupke91/spss-studio-mcp/releases)）；
+- 状态：基于 Windows v1.0.0 增加 PROCESS Model 4，当前版本 **v1.1.0**（[GitHub Releases](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/releases)）；
 - LobeHub / PulseMCP 收录条目与提交清单：[docs/ecosystem.md](docs/ecosystem.md)；
-- Release v1.0.0 说明：[docs/release_notes_v1.0.md](docs/release_notes_v1.0.md)。
+- Release v1.1.0 说明：[docs/release_notes_v1.1.0.md](docs/release_notes_v1.1.0.md)。
 
 ## 许可证
 
-MIT（上游：`Exekiel179/SPSS-MCP`，MIT）。
+MIT（Windows 上游：`flupke91/spss-studio-mcp`；更早上游：`Exekiel179/SPSS-MCP`）。

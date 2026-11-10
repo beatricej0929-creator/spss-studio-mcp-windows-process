@@ -6,8 +6,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)]()
-[![CI](https://github.com/flupke91/spss-studio-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/flupke91/spss-studio-mcp/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/flupke91/spss-studio-mcp)](https://github.com/flupke91/spss-studio-mcp/releases)
+[![CI](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/actions/workflows/ci.yml/badge.svg)](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/beatricej0929-creator/spss-studio-mcp-windows-process)](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/releases)
 
 `spss-studio-mcp` is an MCP (Model Context Protocol) server for **IBM SPSS
 Statistics**. It gives Agent clients such as Codex / Claude Code / Cursor:
@@ -20,27 +20,45 @@ Statistics**. It gives Agent clients such as Codex / Claude Code / Cursor:
   χ² / p / effect sizes);
 - **Verified methods**: all 37 analysis tools plus 11 supporting tools are
   verified on a real SPSS 32 installation;
-- **Mediation / moderation**: `spss_mediation` (Baron & Kenny three-step
-  regression + Sobel test) and `spss_moderation` (mean-centred interaction
-  regression);
+- **Mediation / moderation**: `spss_process` calls the locally installed Hayes
+  PROCESS macro for model 4 bootstrap mediation (single or parallel mediators),
+  alongside `spss_mediation` and `spss_moderation`;
 - **Safety layer**: dangerous-command blocking, data path allowlist,
   `dry_run` preflight, and JSONL audit logging.
 
-Everything is verified on **IBM SPSS Statistics 32.0.0 (Windows)** — 109 unit
-tests pass, including a self-contained real-machine reproduction manifest.
+The original analysis and chart tools were verified on **IBM SPSS Statistics
+32.0.0 (Windows)**. The new PROCESS adapter is covered by automated tests and
+still requires final real-machine validation on Windows with PROCESS installed.
 
 ---
 
 ## Quick Start
 
 ```powershell
-cd spss-studio-mcp
+git clone https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process.git
+cd spss-studio-mcp-windows-process
 pip install -e ".[dev]"
 spss-studio-mcp status                     # should show: SPSS batch: OK
 
 spss-studio-mcp configure-codex            # writes ~/.codex/config.toml
 spss-studio-mcp configure-claude           # writes ~/.claude.json
 ```
+
+## Hayes PROCESS model 4
+
+This repository does not distribute the third-party `process.sps`. Download
+PROCESS from the [official Andrew F. Hayes website](https://www.afhayes.com/download.html),
+then set the macro path in PowerShell or in a project-root `.env` file:
+
+```powershell
+$env:SPSS_PROCESS_MACRO_PATH = "C:\Users\YourName\Downloads\PROCESS v5.1 for SPSS\process.sps"
+```
+
+Restart the MCP client and run `spss_check_status`. The first release supports
+one mediator or multiple parallel mediators, covariates, bootstrap confidence
+intervals, total/direct/indirect effects, indirect-effect contrasts, effect
+sizes, and standardized coefficients. The optional SPSS graphical dialog is
+not required.
 
 Then drive it from your client in natural language, e.g.:
 
@@ -134,12 +152,13 @@ See [docs/security.md](docs/security.md).
 
 ## Ecosystem & Release
 
-- Status: P0–P4 milestones complete, **v1.0.0 released**
-  ([GitHub Releases](https://github.com/flupke91/spss-studio-mcp/releases));
+- Status: PROCESS model 4 added on top of Windows v1.0.0; current version is
+  **v1.1.0** ([GitHub Releases](https://github.com/beatricej0929-creator/spss-studio-mcp-windows-process/releases));
 - LobeHub / PulseMCP listing drafts and submission checklist:
   [docs/ecosystem.md](docs/ecosystem.md);
-- Release v1.0.0 notes: [docs/release_notes_v1.0.md](docs/release_notes_v1.0.md).
+- Release v1.1.0 notes: [docs/release_notes_v1.1.0.md](docs/release_notes_v1.1.0.md).
 
 ## License
 
-MIT (upstream: `Exekiel179/SPSS-MCP`, MIT).
+MIT (Windows upstream: `flupke91/spss-studio-mcp`; earlier upstream:
+`Exekiel179/SPSS-MCP`).

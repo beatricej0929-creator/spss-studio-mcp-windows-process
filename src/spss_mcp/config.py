@@ -3,6 +3,7 @@ Configuration loading and SPSS installation detection for SPSS MCP.
 """
 
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -135,6 +136,61 @@ def get_spss_python() -> str | None:
     return None
 
 
+def get_process_macro_path() -> str | None:
+    """Return the trusted local Hayes PROCESS macro definition file.
+
+    The macro path is configuration-only and is never accepted as an MCP tool
+    argument. This enables a dedicated PROCESS tool without weakening the
+    general ``INSERT FILE`` safety rule.
+    """
+    configured = os.environ.get("SPSS_PROCESS_MACRO_PATH", "").strip()
+    if configured:
+        path = Path(configured).expanduser().resolve()
+        return str(path) if path.is_file() and path.suffix.lower() == ".sps" else None
+
+    roots: list[Path] = []
+    stats_exe = get_spss_executable()
+    if stats_exe:
+        install_dir = Path(stats_exe).resolve().parent
+        roots.extend((install_dir, install_dir.parent))
+    roots.extend(
+        (
+            Path.home() / "Downloads",
+            Path.home() / "Documents",
+            Path.home() / "Desktop",
+        )
+    )
+
+    seen: set[Path] = set()
+    patterns = (
+        "process.sps",
+        "PROCESS*/process.sps",
+        "PROCESS*/**/process.sps",
+    )
+    for root in roots:
+        if not root.is_dir() or root in seen:
+            continue
+        seen.add(root)
+        for pattern in patterns:
+            for candidate in sorted(root.glob(pattern), reverse=True):
+                if candidate.is_file():
+                    return str(candidate.resolve())
+    return None
+
+
+def get_process_macro_version(path: str | None = None) -> str | None:
+    """Read the PROCESS version comment from a macro definition file."""
+    macro_path = Path(path or get_process_macro_path() or "")
+    if not macro_path.is_file():
+        return None
+    try:
+        header = macro_path.read_text(encoding="windows-1252", errors="replace")[:8192]
+    except OSError:
+        return None
+    match = re.search(r"PROCESS\s+version\s+([0-9.]+)", header, re.IGNORECASE)
+    return match.group(1) if match else None
+
+
 def _get_positive_int_env(name: str, default: int) -> int:
     """Return a positive integer env var value or a default."""
     try:
@@ -168,6 +224,7 @@ def get_runtime_config() -> dict:
         "temp_dir": str(get_temp_dir()),
         "results_dir": str(get_results_dir()),
         "spss_path": get_spss_executable(),
+        "process_macro_path": get_process_macro_path(),
     }
 
 
@@ -204,6 +261,9 @@ def detect_capabilities() -> dict:
         "pandas_version": None,
         "spss": False,
         "spss_path": None,
+        "process_macro": False,
+        "process_macro_path": None,
+        "process_macro_version": None,
     }
 
     try:
@@ -232,5 +292,11 @@ def detect_capabilities() -> dict:
         caps["spss_python"] = str(spss_py) if spss_py.exists() else None
     else:
         caps["spss_python"] = None
+
+    process_path = get_process_macro_path()
+    if process_path:
+        caps["process_macro"] = True
+        caps["process_macro_path"] = process_path
+        caps["process_macro_version"] = get_process_macro_version(process_path)
 
     return caps
